@@ -22,3 +22,14 @@ venv/
 
 # git checkout tên nhánh để qua lại 
 
+# Bước 1: Cập nhật nhánh main trước
+
+# git checkout main
+# git pull origin main
+# Bước 2: Thực hiện Rebase để đồng bộ sang qua_tang
+
+# git checkout qua_tang
+# git rebase main
+# Bước 3: Đẩy lên GitHub Vì Rebase làm thay đổi lịch sử của nhánh, bạn có thể cần dùng thêm tham số -f (force) khi đẩy lên lần đầu sau khi rebase:
+
+# git push origin qua_tang -f

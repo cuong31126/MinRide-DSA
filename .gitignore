@@ -1,0 +1,15 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# Environments
+.venv/
+env/
+venv/
+
+# IDEs
+.vscode/
+.idea/
+
+# Data (Tùy chọn: Nếu bạn muốn giữ file data trống trên GitHub)
+# data/*.txt

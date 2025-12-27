@@ -1,0 +1,6 @@
+ID,Name,District,x,y
+1,Anh,Q11,20.0,25.0
+2,Bảo,THỦ ĐỨC,10.0,20.0
+3,Cường,TÂN BÌNH,15.0,20.0
+4,Bão,TÂN BÌNH,17.0,20.0
+5,VND,THỦ ĐỨC,10.0,20.0

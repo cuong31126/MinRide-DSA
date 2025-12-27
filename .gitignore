@@ -19,3 +19,6 @@ venv/
 # git commit -m "Mô tả việc bạn vừa sửa"
 
 # git push
+
+# git checkout tên nhánh để qua lại 
+

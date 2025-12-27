@@ -1,6 +1,7 @@
 # utils/file_io.py
 #dùng để đọc , lưu file chuyển txt thành object 
 from models.driver import Driver
+import os 
 
 def load_drivers(file_path):
     drivers = []
@@ -46,51 +47,39 @@ def save_customers(file_path, customers):
 
 from models.ride import Ride
 
+# --- QUẢN LÝ LỊCH SỬ CHUYẾN ĐI (RIDES.TXT) ---
 def load_rides(path):
     rides = []
+    if not os.path.exists(path): return []
     try:
         with open(path, "r", encoding="utf-8") as f:
-            next(f)  # Bỏ qua header
-            for line_num, line in enumerate(f, start=2):  # start=2 vì đã bỏ header
+            next(f)
+            for line in f:
                 line = line.strip()
-                if not line:
-                    continue
-                
-                try:
-                    # Tách dòng và chỉ lấy 5 phần tử đầu
-                    parts = line.split(",")
-                    if len(parts) < 5:
-                        print(f"Lỗi dòng {line_num}: Thiếu dữ liệu - {line}")
-                        continue
-                    
-                    # Chỉ lấy 5 phần tử đầu, bỏ phần thừa
-                    ride_id, cid, did, dist, fare = parts[:5]
-                    
-                    rides.append(
-                        Ride(
-                            int(ride_id.strip()),
-                            int(cid.strip()),
-                            int(did.strip()),
-                            float(dist.strip()),
-                            float(fare.strip())
-                        )
-                    )
-                except (ValueError, IndexError) as e:
-                    print(f"Lỗi xử lý dòng {line_num}: {line}")
-                    print(f"Chi tiết lỗi: {e}")
-                    continue
-                    
-    except FileNotFoundError:
-        print(f"File {path} không tồn tại. Tạo danh sách rides trống.")
+                if not line: continue
+                # File rides.txt lưu: RideID, CID, DID, Distance, Fare (5 cột)
+                parts = line.split(",")
+                if len(parts) >= 5:
+                    rides.append(Ride(int(parts[0]), int(parts[1]), int(parts[2]), float(parts[3]), float(parts[4])))
     except Exception as e:
-        print(f"Lỗi khi đọc file: {e}")
-    
+        print(f"Lỗi đọc file rides: {e}")
     return rides
 
 def save_rides(path, rides):
     with open(path, "w", encoding="utf-8") as f:
-        f.write("RideID,CustomerID,DriverID,Distance,Fare\n") # <--- CHÈN DÒNG NÀY
+        f.write("RideID,CustomerID,DriverID,Distance,Fare\n")
         for r in rides:
             f.write(f"{r.ride_id},{r.customer_id},{r.driver_id},{r.distance},{r.fare}\n")
+
+# --- QUẢN LÝ HÀNG ĐỢI TẠM THỜI (REQUESTS.TXT) ---
+# Dùng cho Câu 5 và Câu 6 để lưu tạm 6 cột dữ liệu
+def save_request_to_file(cid, cname, did, dname, dist, fare):
+    path = "data/requests.txt"
+    # Kiểm tra xem file có dữ liệu chưa để ghi header
+    file_exists = os.path.exists(path) and os.path.getsize(path) > 0
+    with open(path, "a", encoding="utf-8") as f:
+        if not file_exists:
+            f.write("CID,CName,DID,DName,Distance,Fare\n")
+        f.write(f"{cid},{cname},{did},{dname},{dist},{fare}\n")
 
 

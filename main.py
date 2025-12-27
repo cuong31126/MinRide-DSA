@@ -1,12 +1,15 @@
 # main.py
 from services.driver_service import DriverService
-from models.driver import Driver
 from services.customer_service import CustomerService
-from models.customer import Customer
 from services.ride_service import RideService
 from services.matching_service import MatchingService
-from structures.queue import Queue
 
+from models.driver import Driver
+from models.customer import Customer
+
+from structures.queue import Queue
+from utils.file_io import save_request_to_file
+from utils.display import print_table
 from utils.visualize import plot_customers_and_drivers 
 
 
@@ -47,13 +50,13 @@ def driver_menu():
 def driver_menu_loop(driver_service):
     while True:
         driver_menu()
-        choice = input("Chọn chức năng: ")
+        choice = input("Chọn chức năng: ").strip()
         if choice == "1":
             driver_service.show_all()
         elif choice == "2":
             while True:
                 id_input = input("ID (Để trống để tự động lấy ID tiếp theo): ").strip()
-                if id_input == "":
+                if id_input == "".strip():
                     driver_id = driver_service.get_next_id()
                     print(f"➡️ ID tự động được cấp: {driver_id}")
                     break
@@ -72,12 +75,18 @@ def driver_menu_loop(driver_service):
                 # Thu hẹp khoảng trắng: "  Cường  " -> "Cường"
                 # "Lê    Cường" -> "Lê Cường"
                 name = " ".join(name_input.split())
+                
                 if not name:
                     print("❌ Tên không được để trống!")
+            # Kiểm tra nếu chuỗi chỉ toàn số (ví dụ: "123")
+                elif name.isdigit():
+                    print("❌ Tên không được chỉ chứa chữ số!")
+                # Kiểm tra nâng cao: Tên không được chứa bất kỳ chữ số nào (ví dụ: "Cường123")
+                elif any(char.isdigit() for char in name):
+                    print("❌ Tên không được chứa chữ số!")
                 else:
                     break
-
-
+                    
 
             while True:
                 try:
@@ -105,33 +114,75 @@ def driver_menu_loop(driver_service):
 
             driver_service.add_driver(Driver(driver_id, name, round(rating,2), x, y))
             print("✔ Đã thêm tài xế")
+        
         elif choice == "3":
-            name = input("Nhập tên tài xế hoặc id : ").strip()
-            drivers = driver_service.search_driver(name)
+            key_input = input("Nhập tên tài xế hoặc ID cần cập nhật: ").strip()
+            # Chuẩn hóa đầu vào để tìm kiếm chính xác hơn
+            search_key = " ".join(key_input.split())
+            if not search_key:
+                print("❌ Vui lòng không để trống!")
+                continue
+                
+            drivers = driver_service.search_driver(search_key)
             
+            # --- Bước 1: Xác định tài xế cần cập nhật ---
+            target_driver = None
             if isinstance(drivers, list):
                 if not drivers:
-                    print("❌ Không tìm thấy")
+                    print("❌ Không tìm thấy tài xế!")
                     continue
-                print("Các tài xế trùng tên:")
-                valid_ids = [d.id for d in drivers]
-                for d in drivers: print(d)
-                id = int(input("Nhập ID cần cập nhật: "))
-                if id not in valid_ids:
-                    print("❌ ID không hợp lệ!")
+                
+                print(f"\n🔍 Tìm thấy {len(drivers)} tài xế khớp với '{search_key}':")
+                headers = ["ID", "Tên Tài Xế", "Rating Hiện Tại", "Tọa độ (X, Y)"]
+                rows = [[d.id, d.name, d.rating, f"({d.x}, {d.y})"] for d in drivers]
+                print_table(headers, rows)
+                # sau khi đã hiển thị các tài xế trùng id 
+                
+                try:
+                    update_id = int(input("👉 Nhập ID chính xác của tài xế cần cập nhật: "))
+                    # Tìm đối tượng driver có ID vừa nhập trong danh sách kết quả
+                    target_driver = next((d for d in drivers if d.id == update_id), None)
+                    if not target_driver:
+                        print("❌ ID bạn nhập không nằm trong danh sách tìm thấy!")
+                        continue
+                except ValueError:
+                    print("❌ ID phải là số!")
                     continue
-            else: id = drivers.id
+            elif drivers:
+                target_driver = drivers
+            else:
+                print("❌ Không tìm thấy tài xế!")
+                continue
+
+            # --- Bước 2: Nhập thông tin mới ---
+            print(f"\n🛠 Đang cập nhật cho tài xế: {target_driver.name} (ID: {target_driver.id})")
             while True:
                 try:
                     new_rating = float(input("Rating mới (0-5): "))
-                    new_x = float(input("nhập x mới: "))
-                    new_y = float(input("nhập y mới: "))
-                    if 0 < new_rating <= 5: break          
-                    print("❌ Rating không hợp lệ!")
+                    if not (0 <= new_rating <= 5):
+                        print("❌ Rating phải từ 0 đến 5!")
+                        continue
+                        
+                    new_x = float(input("Tọa độ X mới: "))
+                    new_y = float(input("Tọa độ Y mới: "))
+                    break
+                except ValueError:
+                    print("❌ Vui lòng nhập số hợp lệ!")
 
-                except ValueError: print("❌ Phải nhập số!")
-            driver_service.update_driver(id, new_rating,new_x,new_y)
-            print("✔ Đã cập nhật")
+            # --- Bước 3: Thực hiện cập nhật và Hiển thị kết quả ---
+            driver_service.update_driver(target_driver.id, round(new_rating, 2), new_x, new_y)
+            
+            print("\n✅ CẬP NHẬT THÀNH CÔNG!")
+            res_headers = ["Thông tin", "Giá trị mới"]
+            res_rows = [
+                ["ID", target_driver.id],
+                ["Tên", target_driver.name],
+                ["Rating", round(new_rating, 2)],
+                ["Vị trí mới", f"({new_x}, {new_y})"]
+            ]
+            print_table(res_headers, res_rows)
+
+
         elif choice == "4":
             try:
                 id = int(input("Nhập ID cần xóa: "))
@@ -141,16 +192,49 @@ def driver_menu_loop(driver_service):
                 else: print("❌ ID không tồn tại!")
             except ValueError: print("❌ ID phải là số!")
         elif choice == "5":
-            key = input("Nhập ID hoặc Tên: ")
-            result = driver_service.search_driver(key)
+            # --- Nhập và Chuẩn hóa từ khóa tìm kiếm ---
+            key_input = input("Nhập ID hoặc Tên: ").strip()
+            
+            # Xử lý khoảng trắng thừa ở giữa: "   cuong    " -> "cuong"
+            # Nếu nhập "le   cuong" -> "le cuong"
+            clean_key = " ".join(key_input.split())
+            if not clean_key:
+                print("❌ Vui lòng không để trống từ khóa tìm kiếm!")
+                continue
+            # Tự động viết hoa chữ cái đầu nếu người dùng nhập tên thường 
+            # "cuong" -> "Cuong", "le cuong" -> "Le Cuong"
+            # Điều này giúp khớp với dữ liệu trong hệ thống thường lưu Tên viết hoa
+            search_key = clean_key.lower() if not clean_key.isdigit() else clean_key
+            print(f"🔍 Đang tìm kiếm với từ khóa: '{search_key}'...")
+            result = driver_service.search_driver(search_key)
+            
+            # Xử lý dữ liệu để in bảng
+            drivers_to_print = []
             if isinstance(result, list):
-                for d in result: print(d)
-            elif result: print(result)
-            else: print("❌ Không tìm thấy")
+                drivers_to_print = result
+            elif result: # Nếu trả về 1 đối tượng đơn lẻ
+                drivers_to_print = [result]
+
+            if not drivers_to_print:
+                print("❌ Không tìm thấy tài xế!")
+            else:
+                # 1. Định nghĩa Tiêu đề bảng
+                headers = ["ID", "Tên Tài Xế", "Rating", "Tọa độ (X, Y)"]
+                
+                # 2. Chuyển đổi list đối tượng Driver thành list dữ liệu thô
+                rows = []
+                for d in drivers_to_print:
+                    # Tạo một hàng tương ứng với các cột trong headers
+                    rows.append([d.id, d.name, d.rating, f"({d.x}, {d.y})"])
+                
+                # 3. Gọi hàm in bảng từ display.py
+                print(f"\n🔍 Kết quả tìm kiếm cho: '{search_key}'")
+                print_table(headers, rows)
+
         elif choice == "6":
-            driver_service.sort_by_rating()
             print("✔ Đã sắp xếp")
             driver_service.show_all(sorted_view=True) 
+
         elif choice == "7":
             try:
                 k = int(input("Nhập K: "))
@@ -184,7 +268,7 @@ def customer_menu():
 def customer_menu_loop(customer_service):
     while True:
         customer_menu()
-        choice = input("Chọn chức năng: ")
+        choice = input("Chọn chức năng: ").strip()
         if choice == "1":
             customer_service.show_all()
 
@@ -317,10 +401,6 @@ def customer_menu_loop(customer_service):
             except Exception as e:
                 print(f"❌ Có lỗi xảy ra: {e}")
 
-
-
-
-
         elif choice == "4":
             try:
                 id = int(input("ID cần xóa: "))
@@ -432,7 +512,7 @@ def ride_menu():
 def ride_menu_loop(ride_service):
     while True:
         ride_menu()
-        choice = input("Chọn: ")
+        choice = input("Chọn: ").strip()
         if choice == "1":
             try:
                 driver_id = int(input("Nhập ID tài xế: "))
@@ -462,7 +542,7 @@ def main():
 
     while True:
         main_menu()
-        choice = input("Chọn chức năng: ")
+        choice = input("Chọn chức năng: ").strip()
 
         if choice == "1":
             driver_menu_loop(driver_service)
@@ -529,7 +609,7 @@ def main():
                     ])
                 
                 # Gọi hàm in bảng của bạn
-                from utils.display import print_table
+                
                 print(f"\n✅ Tìm thấy {len(matches)} tài xế phù hợp:")
                 print_table(headers, rows)
                 
@@ -546,45 +626,31 @@ def main():
                 
                 # Tìm đối tượng Customer và Driver thực tế
                 cust = customer_service.get_by_id(cid)
-                driv = driver_service.search_driver(str(did))
-                # Xử lý nếu search_driver trả về list
-                driv = driv[0] if isinstance(driv, list) and driv else driv
+                driv = driver_service.get_by_id(did)
+                
 
                 if cust and driv:
                     trip_dist = float(input("Quãng đường chuyến đi: "))
 
+                    # Tính phí trước để người dùng xem
+                    ride = ride_service.book_ride(cust, driv, trip_dist)
+                    print(f"💰 Phí dự kiến cho khách {cust.name}: {ride.fare} VND")
 
-                    booking_queue.enqueue((cid,did , trip_dist))
+                    
                 
                 # 2. Ghi từ Queue vào file requests.txt theo đúng thứ tự
-                    
-                    
                     # Tạo đối tượng ride tạm thời
-                    ride = ride_service.book_ride(cust, driv, trip_dist)
-                    print(f"💰 Phí dự kiến: {ride.fare} VND")
                     if input("Xác nhận đặt xe? (y/n): ").lower() == "y":
-                        # Gọi hàm confirm_ride đã sửa ở bước 1
-                        ride_service.confirm_ride(ride)
-                        ride_service.save()
+                        # 1. Đưa vào hàng đợi RAM (Thêm cả tên vào tuple để quản lý)
+                        booking_queue.enqueue((cust.id, cust.name, driv.id, driv.name, trip_dist, ride.fare))
 
-# --- PHẦN CHÈN ĐỂ GHI FILE REQUESTS.TXT CÓ HEADER ---
-                        import os
-                        req_path = "data/requests.txt"
-                        # Kiểm tra xem file đã có dữ liệu chưa
-                        file_is_empty = not os.path.exists(req_path) or os.path.getsize(req_path) == 0
-
-                        with open(req_path, "a", encoding="utf-8") as f:
-                            if file_is_empty:
-                                f.write("CustomerID,DriverID,Distance\n") # Ghi tiêu đề nếu file trống
-                            
-                            # Ghi yêu cầu từ cuối hàng đợi
-                            request = booking_queue.items[-1]
-                            f.write(f"{request[0]},{request[1]},{request[2]}\n")
-                        # ---------------------------------------------------
-
+                        # Gọi hàm confirm_ride đã sửa ở bước 
+                        
                         print("✔ Chuyến đi mới đã được đặt thành công (ID: 1)!")
                         print(f"✅ Đã thêm khách hàng {cid} vào hàng đợi")
-                        # ride_service.save()
+                        
+                        save_request_to_file(cust.id, cust.name, driv.id, driv.name, trip_dist, ride.fare)
+                        print("✅ Đã thêm vào hàng đợi.")
                 else:
                     print("❌ Lỗi: ID khách hàng hoặc tài xế không tồn tại.")
             except Exception as e: 
@@ -640,24 +706,17 @@ def main():
                     continue
 
                 # 5. Tiến hành đặt xe tự động
-                ride = ride_service.book_ride(customer, best_driver, trip_dist)
+                ride = ride_service.book_ride(customer, best_driver, trip_dist)  # hàm tình tiến 
                 print(f"💰 Phí dự kiến: {ride.fare} VND")
                 
                 confirm = input("Xác nhận tự động đặt tài xế này? (y/n): ").lower()
                 if confirm == "y":
                     # Lưu vào Queue và File requests.txt
-                    booking_queue.enqueue((cid, best_driver.id, trip_dist))
-                    ride_service.confirm_ride(ride)
-
-                    # Ghi file log request
-                    import os
-                    req_path = "data/requests.txt"
-                    file_is_empty = not os.path.exists(req_path) or os.path.getsize(req_path) == 0
-                    with open(req_path, "a", encoding="utf-8") as f:
-                        if file_is_empty:
-                            f.write("CustomerID,DriverID,Distance\n")
-                        request = booking_queue.items[-1]
-                        f.write(f"{request[0]},{request[1]},{request[2]}\n")
+                    booking_queue.enqueue((customer.id, customer.name, best_driver.id, best_driver.name, trip_dist, ride.fare))
+                    # lưu vào file request.txt 
+                    save_request_to_file(customer.id, customer.name, best_driver.id, best_driver.name, trip_dist, ride.fare)
+                    print(f"✅ Đã thêm {best_driver.name} vào hàng đợi cho khách {cust.name}")
+                    
 
                     print(f"✔ Chúc mừng! Tài xế {best_driver.name} đang đến đón bạn.")
                 else:
@@ -677,9 +736,8 @@ def main():
 
         elif choice == "0":
             print("Thoát hệ thống MinRide.")
-            with open("data/requests.txt", "w", encoding="utf-8") as f:
-                f.write("CustomerID,DriverID,Distance\n")
-            # ride_service.save()
+            
+            
             customer_service.save()
             driver_service.save()
             

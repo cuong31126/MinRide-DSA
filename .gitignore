@@ -24,12 +24,17 @@ venv/
 
 # Bước 1: Cập nhật nhánh main trước
 
-# git checkout main
+
 # git pull origin main
 # Bước 2: Thực hiện Rebase để đồng bộ sang qua_tang
 
-# git checkout qua_tang
-# git rebase main
+# git checkout main 
+# git rebase qua_tang
 # Bước 3: Đẩy lên GitHub Vì Rebase làm thay đổi lịch sử của nhánh, bạn có thể cần dùng thêm tham số -f (force) khi đẩy lên lần đầu sau khi rebase:
 
 # git push origin qua_tang -f
+
+
+# Tạm cất đi (Stash) - Dùng khi bạn chưa muốn commit
+# git stash
+# Tác dụng: Git sẽ dọn sạch các thay đổi hiện tại và đưa file về trạng thái sạch sẽ nhất để bạn có thể chuyển nhánh.

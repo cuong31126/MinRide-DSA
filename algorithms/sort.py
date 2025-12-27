@@ -1,4 +1,29 @@
 # algorithms/sort.py
+
+def quick_sort_drivers_by_id(drivers, reverse=False):
+    """
+    Sắp xếp tài xế theo ID sử dụng thuật toán Quick Sort.
+    Độ phức tạp: O(n log n).
+    """
+    if len(drivers) <= 1:
+        return drivers
+
+    # Chọn pivot là phần tử giữa để tối ưu trường hợp dữ liệu đã gần sắp xếp
+    pivot_obj = drivers[len(drivers) // 2]
+    pivot_id = pivot_obj.id
+
+    if not reverse:
+        left = [d for d in drivers if d.id < pivot_id]
+        middle = [d for d in drivers if d.id == pivot_id]
+        right = [d for d in drivers if d.id > pivot_id]
+    else:
+        # Nếu reverse=True, đảo ngược logic so sánh
+        left = [d for d in drivers if d.id > pivot_id]
+        middle = [d for d in drivers if d.id == pivot_id]
+        right = [d for d in drivers if d.id < pivot_id]
+
+    return quick_sort_drivers_by_id(left, reverse) + middle + quick_sort_drivers_by_id(right, reverse)
+
 def radix_sort_drivers_by_rating(drivers):
     if not drivers:
         return drivers

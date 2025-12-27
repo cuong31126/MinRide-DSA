@@ -13,3 +13,9 @@ venv/
 
 # Data (Tùy chọn: Nếu bạn muốn giữ file data trống trên GitHub)
 # data/*.txt
+
+# git add .
+
+# git commit -m "Mô tả việc bạn vừa sửa"
+
+# git push

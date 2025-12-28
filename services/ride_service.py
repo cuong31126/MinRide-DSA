@@ -22,9 +22,6 @@ class RideService:
     def get_rides_by_driver(self,driver_id):
         rides = load_rides(RIDES_FILE)
         result = [r for r in rides if r.driver_id == driver_id]
-        result.sort(key=lambda r: r.ride_id)  # theo thời gian
-
-        
         return result
 
     # =========================
@@ -95,7 +92,7 @@ class RideService:
     def show_rides(self, rides):
         headers = ["RideID", "CustomerID", "DriverID", "Distance(km)", "Fare(VND)"]
         rows = [
-            [r.ride_id, r.customer_id, r.driver_id, r.distance, format(r.fare*1000, ",.0f")]
+            [r.ride_id, r.customer_id, r.driver_id, r.distance, format(r.fare, ",.0f")]
             for r in rides
         ]
         print_table(headers, rows)

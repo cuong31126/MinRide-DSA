@@ -23,13 +23,6 @@ class MatchingService:
         result.sort(key=lambda x: (x[1], -x[0].rating))
         return result
     
-    def auto_match_driver(self, customer_id, radius):
-        drivers = self.find_nearby_drivers(customer_id, radius)
-        if not drivers:
-            return None
-        return drivers[0][0]  # tài xế gần nhất
-    
-
 # Trong class MatchingService (MatchingService.py)
     def process_and_show_requests(self):
         req_path = "data/requests.txt"
@@ -86,7 +79,7 @@ class MatchingService:
                 break
 
     def move_requests_to_history(self, new_data_list):
-        import os
+        
         ride_path = "data/rides.txt"
         old_rides = []
 
@@ -120,38 +113,6 @@ class MatchingService:
                 # item là [cid, did, dist, fare]
                 f.write(f"{index},{item[0]},{item[1]},{item[2]},{item[3]}\n")
 
-
-
-
-    def convert_requests_to_rides(
-        request_file="data/requests.txt",
-        rides_file="data/rides.txt",
-        price_per_km=10
-    ):
-        file_exists = os.path.exists(rides_file)
-        ride_id = 1
-
-        # Nếu file đã tồn tại và không rỗng → tính ride_id tiếp theo
-        if file_exists and os.path.getsize(rides_file) > 0:
-            with open(rides_file, "r", encoding="utf-8") as f:
-                lines = f.readlines()
-                ride_id = len(lines)  # đã có header → dòng cuối +1
-
-        with open(request_file, "r", encoding="utf-8") as f:
-            request_lines = f.readlines()[1:]  # bỏ header
-
-        with open(rides_file, "a", encoding="utf-8", newline="") as f:
-            # Chỉ ghi header nếu file chưa tồn tại hoặc rỗng
-            if not file_exists or os.path.getsize(rides_file) == 0:
-                f.write("RideID,CustomerID,DriverID,Distance,Fare\n")
-
-            for line in request_lines:
-                customer_id, driver_id, distance = line.strip().split(",")
-                distance = float(distance)
-                fare = distance * price_per_km
-
-                f.write(f"{ride_id},{customer_id},{driver_id},{distance},{fare}\n")
-                ride_id += 1
 
 
 

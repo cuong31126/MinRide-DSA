@@ -237,13 +237,31 @@ def driver_menu_loop(driver_service):
 
         elif choice == "7":
             try:
-                k = int(input("Nhập K: "))
-                pos = input("Nhấn C để xem top cuối, phím khác để xem top đầu: ").upper()
+                k = int(input("Nhập số lượng tài xế (K): "))
+                pos = input("Nhấn 'C' để xem top thấp nhất, phím khác để xem top cao nhất: ").upper()
                 top = False if pos == "C" else True
-                for d in driver_service.show_top_k(k, top): print(d)
-            except ValueError: print("❌ K phải là số!")
+                
+                # Lấy danh sách đối tượng tài xế từ service
+                top_drivers = driver_service.show_top_k(k, top)
+                
+                if not top_drivers:
+                    print("ℹ️ Danh sách tài xế trống.")
+                else:
+                    # Chuẩn bị tiêu đề và dữ liệu cho bảng
+                    title = "TOP CAO NHẤT" if top else "TOP THẤP NHẤT"
+                    headers = ["ID", "Tên Tài Xế", "Rating", "Tọa độ X", "Tọa độ Y"]
+                    
+                    # Chuyển đổi list đối tượng Driver thành dữ liệu thô
+                    rows = [[d.id, d.name, f"{d.rating} ⭐", d.x, d.y] for d in top_drivers]
+                    
+                    print(f"\n🏆 BẢNG XẾP HẠNG {k} TÀI XẾ {title}")
+                    # Gọi hàm in bảng để hiển thị dữ liệu đẹp mắt
+                    print_table(headers, rows)
+                    
+            except ValueError:
+                print("❌ Lỗi: K phải là một số nguyên!")
         elif choice == "8":
-            driver_service.drivers = driver_service.undo()
+            driver_service.undo()
         elif choice == "0":
             
             break
@@ -274,8 +292,6 @@ def customer_menu_loop(customer_service):
 
 
         elif choice == "2":
-            # --- Nhập ID ---
-            
             # --- Nhập ID tự động hoặc thủ công ---
             while True:
                 id_input = input("ID (Để trống để tự động lấy ID tiếp theo): ").strip()
@@ -305,16 +321,14 @@ def customer_menu_loop(customer_service):
                 dist_input = input("Quận hoặc Thành Phố(khu vực HCM) (Ví dụ: Thủ Đức): ").strip().upper()
                 # Loại bỏ tất cả khoảng trắng bên trong để "Q    12" -> "Q12"
                 
-
                 if dist_input.startswith("Q") and dist_input[1:].isdigit():
                     q_num = int(dist_input[1:])
                     if 1 <= q_num <= 12 and q_num != 9:
                         district = f"Q{q_num}" # Đảm bảo định dạng chuẩn Q1, Q2...
                         break
-                if ("THỦ ĐỨC" == dist_input or "BÌNH TÂN" == dist_input or
-                    "BÌNH THẠNH" == dist_input or  "GÒ VẤP" == dist_input or
-                    "PHÚ NHUẬN" == dist_input or "TÂN BÌNH" == dist_input or
-                    "TÂN PHÚ" == dist_input):
+
+                dist_input = " ".join(dist_input.split())
+                if dist_input in ["THỦ ĐỨC", "BÌNH TÂN", "BÌNH THẠNH", "GÒ VẤP", "PHÚ NHUẬN", "TÂN BÌNH", "TÂN PHÚ"]:
                     district = dist_input
                     break
                 print("❌ Lỗi: Quận phải nằm trong thành phố Hồ Chí Minh!")
@@ -334,8 +348,6 @@ def customer_menu_loop(customer_service):
                     break
                 except ValueError:
                     print("❌ Tọa độ y phải là một số!")
-
-            from models.customer import Customer
             customer_service.add_customer(Customer(customer_id, name, district, x, y))
             print(f"✔ Đã thêm khách hàng: {name} tại {district}")
 
@@ -365,17 +377,13 @@ def customer_menu_loop(customer_service):
                 while True:
                     dist_input = input("Quận hoặc Thành Phố(khu vực HCM) (Ví dụ: Thủ Đức): ").strip().upper()
                     # Loại bỏ tất cả khoảng trắng bên trong để "Q    12" -> "Q12"
-                    
-
                     if dist_input.startswith("Q") and dist_input[1:].isdigit():
                         q_num = int(dist_input[1:])
                         if 1 <= q_num <= 12 and q_num != 9:
                             new_district = f"Q{q_num}" # Đảm bảo định dạng chuẩn Q1, Q2...
                             break
-                    if ("THỦ ĐỨC" == dist_input or "BÌNH TÂN" == dist_input or
-                        "BÌNH THẠNH" == dist_input or  "GÒ VẤP" == dist_input or
-                        "PHÚ NHUẬN" == dist_input or "TÂN BÌNH" == dist_input or
-                        "TÂN PHÚ" == dist_input):
+                    dist_input = " ".join(dist_input.split())
+                    if dist_input in ["THỦ ĐỨC", "BÌNH TÂN", "BÌNH THẠNH", "GÒ VẤP", "PHÚ NHUẬN", "TÂN BÌNH", "TÂN PHÚ"]:
                         new_district = dist_input
                         break
                     print("❌ Lỗi: Quận phải nằm trong thành phố Hồ Chí Minh!")
@@ -410,61 +418,58 @@ def customer_menu_loop(customer_service):
 
         elif choice == "5":
             while True:
-                key_input = input("Nhập ID hoặc Tên cần tìm: ").strip()
+                key_input = input("🔍 Nhập ID hoặc Tên cần tìm: ").strip()
                 
-                # 1. Kiểm tra không được để trống
                 if not key_input:
                     print("❌ Vui lòng không để trống ô tìm kiếm!")
                     continue
                 
-                # 2. Chuẩn hóa đầu vào
-                # Nếu là số -> Ép kiểu về int để tìm theo ID
-                # Nếu là chữ -> Chuẩn hóa khoảng trắng để tìm theo Tên
+                # Chuẩn hóa đầu vào
                 if key_input.isdigit():
                     key = int(key_input)
                     if key <= 0:
                         print("❌ ID phải là số dương!")
                         continue
                 else:
-                    # "  nguyen   van a  " -> "nguyen van a"
                     key = " ".join(key_input.split()).title()
                 
-                # 3. Thực hiện tìm kiếm
+                # Thực hiện tìm kiếm
                 result = customer_service.search(key)
                 
-                if isinstance(result, list) and len(result) > 0:
-                    # Nếu trả về danh sách (tìm theo tên có thể trùng)
-                    print(f"\n🔍 Tìm thấy {len(result)} kết quả:")
-                    for c in result: 
-                        print(c)
-                    break # Thoát vòng lặp sau khi tìm thấy
-                elif result and not isinstance(result, list):
-                    # Nếu trả về 1 đối tượng duy nhất (tìm theo ID)
-                    print("\n🔍 Kết quả tìm kiếm:")
-                    print(result)
-                    break
-                else:
+                # --- PHẦN NÂNG CẤP IN BẢNG ĐẸP ---
+                customers_to_show = []
+                if isinstance(result, list):
+                    customers_to_show = result # result đã là danh sách khách hàng
+                elif result:
+                    customers_to_show = [result] # Bỏ đối tượng đơn lẻ vào list để duyệt
+
+                if not customers_to_show:
                     print(f"❌ Không tìm thấy khách hàng nào khớp với '{key}'")
-                    # Cho phép người dùng nhập lại hoặc nhấn phím khác để thoát
                     cont = input("Bạn có muốn tìm lại không? (y/n): ").lower()
                     if cont != 'y':
-                        break   
+                        break
+                else:
+                    headers = ["ID", "Tên Khách Hàng", "Quận", "Tọa độ X", "Tọa độ Y"]
+                    # Chuyển đổi danh sách đối tượng thành danh sách các hàng dữ liệu thô
+                    rows = [[c.id, c.name, c.district, c.x, c.y] for c in customers_to_show]
+                    
+                    print(f"\n✅ Tìm thấy {len(customers_to_show)} kết quả cho '{key}':")
+                    # Gọi hàm in bảng chuyên nghiệp
+                    print_table(headers, rows)
+                    break
 
         elif choice == "6":
             while True:
                 dist_input = input("Quận hoặc Thành Phố(khu vực HCM) (Ví dụ: Thủ Đức): ").strip().upper()
                 # Loại bỏ tất cả khoảng trắng bên trong để "Q    12" -> "Q12"
                 
-
                 if dist_input.startswith("Q") and dist_input[1:].isdigit():
                     q_num = int(dist_input[1:])
                     if 1 <= q_num <= 12 and q_num != 9:
                         district = f"Q{q_num}" # Đảm bảo định dạng chuẩn Q1, Q2...
                         break
-                if ("THỦ ĐỨC" == dist_input or "BÌNH TÂN" == dist_input or
-                    "BÌNH THẠNH" == dist_input or  "GÒ VẤP" == dist_input or
-                    "PHÚ NHUẬN" == dist_input or "TÂN BÌNH" == dist_input or
-                    "TÂN PHÚ" == dist_input):
+                dist_input = " ".join(dist_input.split())
+                if dist_input in ["THỦ ĐỨC", "BÌNH TÂN", "BÌNH THẠNH", "GÒ VẤP", "PHÚ NHUẬN", "TÂN BÌNH", "TÂN PHÚ"]:
                     district = dist_input
                     break
                 print("❌ Lỗi: Quận phải nằm trong thành phố Hồ Chí Minh!")
@@ -475,22 +480,30 @@ def customer_menu_loop(customer_service):
             if not result:
                 print(f"ℹ️ Không có khách hàng nào ở {district}.")
             else:
-                print(f"\n📍 Danh sách khách hàng tại {district} (Tổng số: {len(result)})")
+                print(f"\n📍 DANH SÁCH KHÁCH HÀNG TẠI {district}")
+                print(f"(Tổng số: {len(result)} khách hàng)")
                 
-                # In bảng tiêu đề cho đẹp nếu bạn đã có utils.display
-                # headers = ["ID", "Tên", "Quận", "X", "Y"]
-                # rows = [[c.id, c.name, c.district, c.x, c.y] for c in result]
+                # --- PHẦN NÂNG CẤP IN BẢNG ĐẸP ---
+                headers = ["ID", "Tên Khách Hàng", "Quận/Thành Phố", "Tọa độ X", "Tọa độ Y"]
                 
                 i = 0
+                step = 10 # Số lượng khách hàng hiển thị mỗi trang
                 while i < len(result):
-                    # In từng nhóm 10 khách hàng
-                    for c in result[i:i+10]: 
-                        print(c)
+                    # Lấy một nhóm khách hàng (tối đa 10 người)
+                    current_batch = result[i : i + step]
                     
-                    i += 10
+                    # Chuyển đổi đối tượng Customer thành danh sách dữ liệu thô để in bảng
+                    rows = [[c.id, c.name, c.district, c.x, c.y] for c in current_batch]
+                    
+                    # Gọi hàm in bảng từ display.py
+                    print_table(headers, rows)
+                    
+                    i += step
                     if i < len(result):
-                        if input(f"--- Đã xem {i}/{len(result)}. Xem tiếp 10 người nữa? (y/n): ").lower() != "y": 
+                        cont = input(f"👉 Đã hiển thị {i}/{len(result)}. Xem tiếp {step} người nữa? (y/n): ").lower()
+                        if cont != "y":
                             break
+                print("✅ Đã hiển thị xong danh sách.")
         elif choice == "7":
             customer_service.customers = customer_service.undo()
         
@@ -715,7 +728,7 @@ def main():
                     booking_queue.enqueue((customer.id, customer.name, best_driver.id, best_driver.name, trip_dist, ride.fare))
                     # lưu vào file request.txt 
                     save_request_to_file(customer.id, customer.name, best_driver.id, best_driver.name, trip_dist, ride.fare)
-                    print(f"✅ Đã thêm {best_driver.name} vào hàng đợi cho khách {cust.name}")
+                    print(f"✅ Đã thêm {best_driver.name} vào hàng đợi cho khách {customer.name}")
                     
 
                     print(f"✔ Chúc mừng! Tài xế {best_driver.name} đang đến đón bạn.")
@@ -724,7 +737,6 @@ def main():
 
             except Exception as e:
                 print(f"❌ Lỗi hệ thống khi ghép cặp: {e}")
-           
     
         elif choice == "7":
             matching_service.process_and_show_requests()

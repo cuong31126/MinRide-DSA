@@ -4,6 +4,7 @@ from algorithms.search import *
 from algorithms.sort import *
 from config import DRIVERS_FILE
 from utils.display import print_table
+from structures.stack import Stack 
 import copy
 
 
@@ -12,8 +13,7 @@ class DriverService:
     def __init__(self):
         # Load dữ liệu và đảm bảo nó luôn ở thứ tự ID tăng dần ngay từ đầu
         self.drivers = load_drivers(DRIVERS_FILE)
-        self.drivers.sort(key=lambda d: d.id) 
-        self.undo_stack = []
+        self.undo_stack = Stack()
 
     def show_all(self, sorted_view=False):   # giúp show hết hoặc sắp xếp theo rating chức năng 1  và 6 trong ql tài xế 
         """
@@ -91,14 +91,15 @@ class DriverService:
         return None
     
     def save_state(self):#lưu trạng thái để quay lại      lựa chon 2 ,3, 4  
-        self.undo_stack.append(copy.deepcopy(self.drivers))
+        self.undo_stack.push(copy.deepcopy(self.drivers))
 
-    def undo(self):  # lựa chọn 8 
-
-        if self.undo_stack:
-
+    def undo(self):
+        # Kiểm tra xem Stack có trống hay không
+        if not self.undo_stack.is_empty():
             print("↩️ Đã quay lại trạng thái trước đó.")
-            return self.undo_stack.pop()
+            # Lấy trạng thái cũ nhất ra khỏi Stack và gán lại cho self.drivers
+            self.drivers = self.undo_stack.pop()
+            return self.drivers
         else:
             print("❌ Không có trạng thái nào để quay lại.")
             return self.drivers

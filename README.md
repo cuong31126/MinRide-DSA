@@ -38,10 +38,10 @@ Hệ thống tận dụng tối đa sức mạnh của DSA để tối ưu hóa 
 
 ## 🚀 Các tính năng chính
 
-- [cite_start]**Quản lý Thực thể**: CRUD (Thêm, Sửa, Xóa) Tài xế và Khách hàng với cơ chế ID tự động.
+- **Quản lý Thực thể**: CRUD (Thêm, Sửa, Xóa) Tài xế và Khách hàng với cơ chế ID tự động.
 - **Matching thông minh**: Tìm kiếm tài xế trong bán kính R và tự động tính toán "Tiền tiết kiệm".
 - **Hàng đợi Requests**: Lưu trữ tạm thời các yêu cầu đặt xe chưa xác nhận vào `requests.txt`, hỗ trợ xử lý hàng loạt.
-- [cite_start]**Hệ thống Undo**: Cho phép hoàn tác các thao tác quản lý dữ liệu sai sót thông qua Stack.
+- **Hệ thống Undo**: Cho phép hoàn tác các thao tác quản lý dữ liệu sai sót thông qua Stack.
 - **Visualize**: Trực quan hóa vị trí thực tế của các đối tượng trên bản đồ tọa độ XY.
 
 ---
@@ -49,14 +49,21 @@ Hệ thống tận dụng tối đa sức mạnh của DSA để tối ưu hóa 
 ## 📁 Cấu trúc thư mục
 
 MinRide/
-├── main.py              # Entry point và Menu điều khiển
-├── config.py            # Cấu hình đường dẫn file dữ liệu
-├── models/              # Định nghĩa lớp đối tượng (Driver, Customer, Ride)
-├── services/            # Logic xử lý nghiệp vụ (Matching, Ride, v.v.)
-├── algorithms/          # Thuật toán tìm kiếm & sắp xếp (Radix, Quick, Binary)
-├── structures/          # Cấu trúc dữ liệu Stack & Queue
-├── utils/               # File IO, hiển thị bảng, tính khoảng cách
-└── data/                # File lưu trữ dữ liệu txt (drivers, customers, rides, requests)
+├── main.py                 # Entry point và Menu điều khiển
+
+├── config.py               # Cấu hình đường dẫn file dữ liệu
+
+├── models/                 # Định nghĩa lớp đối tượng (Driver, Customer, Ride)
+
+├── services/               # Logic xử lý nghiệp vụ (Matching, Ride, v.v.)
+
+├── algorithms/             # Thuật toán tìm kiếm & sắp xếp (Radix, Quick, Binary)
+
+├── structures/             # Cấu trúc dữ liệu Stack & Queue
+
+├── utils/                  # File IO, hiển thị bảng, tính khoảng cách
+
+└── data/                   # File lưu trữ dữ liệu txt (drivers, customers, rides, requests)
 
 ---
 
